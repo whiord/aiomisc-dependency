@@ -1,7 +1,7 @@
 from . import freeze, enter_session, exit_session, inject, dependency
 
 
-async def resolve_dependencies(entrypoint, services):
+async def resolve_dependencies(entrypoint, services, **_):
 
     @dependency
     def loop():
@@ -10,11 +10,17 @@ async def resolve_dependencies(entrypoint, services):
     freeze()
     await enter_session()
     for svc in services:
-        if hasattr(svc, '__dependencies__'):
-            await inject(svc, svc.__dependencies__)
+        dependencies_list = getattr(svc, '__dependencies__', None)
+        dependencies_map = getattr(svc, '__dependencies_map__', None)
+        if dependencies_list or dependencies_map:
+            await inject(
+                svc,
+                dependencies_list=dependencies_list,
+                dependencies_map=dependencies_map,
+            )
 
 
-async def clear_dependencies(entrypoint):
+async def clear_dependencies(entrypoint, **_):
     await exit_session()
 
 
